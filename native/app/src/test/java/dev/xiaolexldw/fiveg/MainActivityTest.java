@@ -153,20 +153,71 @@ public class MainActivityTest {
         }
     }
 
-    @Test public void aboutShowsOwnAuthorAndOfflineLicenseNotices() {
+    @Test public void aboutOnlyOffersTheRepositoryLinkAndNoAuthorFooter() {
         try (ActivityController<TestActivity> lifecycle = launch()) {
-            tagged(lifecycle.get(), "about").performClick();
+            TestActivity activity = lifecycle.get();
+            assertFalse(allText(activity.getWindow().getDecorView()).contains("XiaoLeXLDW"));
+            tagged(activity, "about").performClick();
             drainMainLooper();
             AlertDialog about = ShadowAlertDialog.getLatestAlertDialog();
-            String message = Shadows.shadowOf(about).getMessage().toString();
-            assertTrue(message.contains("XiaoLeXLDW"));
-            about.getButton(AlertDialog.BUTTON_NEUTRAL).performClick();
+            View github = about.getWindow().getDecorView().findViewWithTag("github-link");
+            assertNotNull(github);
+            assertFalse(allText(about.getWindow().getDecorView()).contains("XiaoLeXLDW"));
+            github.performClick();
             drainMainLooper();
-            AlertDialog notices = ShadowAlertDialog.getLatestAlertDialog();
-            TextView text = notices.getWindow().getDecorView().findViewWithTag("license-text");
-            assertNotNull(text);
-            assertTrue(text.getText().toString().contains("Shizuku"));
-            assertFalse(text.getText().toString().contains("许可信息暂不可用"));
+            Intent launched = Shadows.shadowOf(activity).getNextStartedActivity();
+            assertNotNull(launched);
+            assertEquals(Intent.ACTION_VIEW, launched.getAction());
+            assertEquals("https://github.com/XiaoLeXLDW/5g-switch-os4-shizuku", launched.getDataString());
+            assertEquals(0, fake.writeCount);
+        }
+    }
+
+    @Test public void cancellingHideInstructionsLeavesLauncherVisibleAndDoesNotWrite5G() {
+        try (ActivityController<TestActivity> lifecycle = launch()) {
+            TestActivity activity = lifecycle.get();
+            Switch hide = tagged(activity, "hide-launcher-switch");
+            assertFalse(hide.isChecked());
+            hide.performClick();
+            drainMainLooper();
+            AlertDialog instructions = ShadowAlertDialog.getLatestAlertDialog();
+            String message = Shadows.shadowOf(instructions).getMessage().toString();
+            assertTrue(message.contains("先将 5G 按钮添加到控制中心"));
+            assertTrue(message.contains("按住控制中心的 5G 按钮"));
+            assertFalse(hide.isChecked());
+            assertFalse(LauncherVisibility.isHidden(activity));
+            instructions.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+            drainMainLooper();
+            assertFalse(hide.isChecked());
+            assertFalse(LauncherVisibility.isHidden(activity));
+            assertEquals(0, fake.writeCount);
+        }
+    }
+
+    @Test public void hideAndRestoreFollowPackageManagerStateAcrossActivityRecreation() throws IOException {
+        fake.value = state(1, false, FiveGController.Access.READY);
+        try (ActivityController<TestActivity> lifecycle = launch()) {
+            TestActivity activity = lifecycle.get();
+            ((Switch) tagged(activity, "hide-launcher-switch")).performClick();
+            drainMainLooper();
+            AlertDialog instructions = ShadowAlertDialog.getLatestAlertDialog();
+            instructions.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+            drainMainLooper();
+            assertTrue(LauncherVisibility.isHidden(activity));
+            assertTrue(((Switch) tagged(activity, "hide-launcher-switch")).isChecked());
+            assertEquals(0, fake.writeCount);
+            capture(activity, "native-light-hidden-launcher.png");
+
+            lifecycle.recreate();
+            drainMainLooper();
+            activity = lifecycle.get();
+            Switch hide = tagged(activity, "hide-launcher-switch");
+            assertTrue(hide.isChecked());
+            hide.performClick();
+            drainMainLooper();
+            assertFalse(LauncherVisibility.isHidden(activity));
+            assertFalse(hide.isChecked());
+            assertEquals(0, fake.writeCount);
         }
     }
 
@@ -234,6 +285,16 @@ public class MainActivityTest {
 
     private static void drainMainLooper() {
         Shadows.shadowOf(Looper.getMainLooper()).idle();
+    }
+
+    private static String allText(View view) {
+        StringBuilder text = new StringBuilder();
+        if (view instanceof TextView) text.append(((TextView) view).getText()).append('\n');
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) text.append(allText(group.getChildAt(i)));
+        }
+        return text.toString();
     }
 
     @SuppressWarnings("unchecked")

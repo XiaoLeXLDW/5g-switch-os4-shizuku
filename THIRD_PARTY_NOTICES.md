@@ -9,4 +9,4 @@
 | [AndroidX Annotations](https://android.googlesource.com/platform/frameworks/support/) | Apache-2.0 |
 | [Gradle Wrapper](https://github.com/gradle/gradle)（构建工具） | Apache-2.0 |
 
-完整应用依赖许可见 [licenses.txt](native/app/src/main/assets/licenses.txt)，App 内可从“关于 → 开源许可”查看。Gradle Wrapper 的原版权头保留。
+完整应用依赖许可见 [licenses.txt](native/app/src/main/assets/licenses.txt)，也随 APK 一同打包。Gradle Wrapper 的原版权头保留。

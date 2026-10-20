@@ -89,9 +89,7 @@ public class FiveGTileService extends TileService {
 
     @android.annotation.SuppressLint("StartActivityAndCollapseDeprecated")
     private void openApplication() {
-        Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
-        if (intent == null) return;
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent intent = LauncherVisibility.settingsIntent(this);
         try {
             if (Build.VERSION.SDK_INT >= 34) {
                 PendingIntent pending = PendingIntent.getActivity(this, 5, intent,

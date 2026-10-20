@@ -55,7 +55,7 @@ try {
         }
     }
     $verificationRoot = Join-Path $nativeRoot "app\build\verification\$variant"
-    $artifact = Join-Path $projectRoot "dist\5G-Switch-XiaoLeXLDW-v1.0.0-$variant.apk"
+    $artifact = Join-Path $projectRoot "dist\5G-Switch-v1.1.0-$variant.apk"
     New-Item -ItemType Directory -Path $verificationRoot,(Split-Path -Parent $artifact) -Force | Out-Null
     $gradleArgs = @('--no-daemon','--console=plain','-p',$nativeRoot,':app:testDebugUnitTest',":app:lint$taskVariant",":app:assemble$taskVariant")
     if ($Offline) { $gradleArgs = @('--offline') + $gradleArgs }
@@ -84,7 +84,7 @@ try {
     $badging = & (Join-Path $buildTools "aapt2$suffix") dump badging $built
     Assert-NativeSuccess 'APK metadata'
     $badging | Out-File -LiteralPath (Join-Path $verificationRoot 'badging.txt') -Encoding utf8
-    if ($badging[0] -notmatch "name='com.ysy.switcherfiveg.hyperos4' versionCode='26102001' versionName='1.0.0'") {
+    if ($badging[0] -notmatch "name='com.ysy.switcherfiveg.hyperos4' versionCode='26102002' versionName='1.1.0'") {
         throw 'Unexpected APK identity/version.'
     }
     Copy-Item -LiteralPath $built -Destination $artifact

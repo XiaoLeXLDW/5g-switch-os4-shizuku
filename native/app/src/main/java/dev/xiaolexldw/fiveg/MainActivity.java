@@ -5,13 +5,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.service.quicksettings.TileService;
@@ -19,6 +19,7 @@ import android.text.InputFilter;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
@@ -34,15 +35,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-
 /** Small native settings surface for the user's 5G preference. */
 public class MainActivity extends Activity {
     private static final String TILE_COMPONENT = "com.ysy.switcherfiveg.SwitcherTileService";
+    private static final String REPOSITORY_URL = "https://github.com/XiaoLeXLDW/5g-switch-os4-shizuku";
     private static final int MAX_LABEL_CODE_POINTS = 6;
+    private static final Typeface SYSTEM_SANS = Typeface.create("sans-serif", Typeface.NORMAL);
 
     private UiController controller;
     private final FiveGController.Listener stateListener = this::render;
@@ -53,10 +51,12 @@ public class MainActivity extends Activity {
     private TextView accessDetail;
     private TextView tileLabel;
     private Switch toggle;
+    private Switch launcherSwitch;
     private Button accessButton;
     private Button refreshButton;
     private LinearLayout accessCard;
     private boolean updatingSwitch;
+    private boolean updatingLauncherSwitch;
     private FiveGController.Access currentAccess = FiveGController.Access.SERVICE_STOPPED;
 
     /** Keeps Activity tests independent from Shizuku and device services. */
@@ -114,6 +114,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         tileLabel.setText(TilePreferences.label(this));
+        refreshLauncherSwitch();
         controller.refresh();
     }
 
@@ -171,7 +172,7 @@ public class MainActivity extends Activity {
         LinearLayout main = horizontal();
         main.setGravity(Gravity.CENTER_VERTICAL);
         TextView fiveG = text("5G", 66, colors.heroInk, true);
-        fiveG.setLetterSpacing(-0.055f);
+        fiveG.setLetterSpacing(0f);
         main.addView(fiveG, new LinearLayout.LayoutParams(0, -2, 1));
         toggle = new Switch(this);
         toggle.setTag("fiveg-switch");
@@ -249,12 +250,10 @@ public class MainActivity extends Activity {
         divider(settings);
         settings.addView(settingsRow("移动网络设置", null, "network-settings", this::openNetworkSettings));
         divider(settings);
+        settings.addView(launcherVisibilityRow());
+        divider(settings);
         settings.addView(settingsRow("关于", null, "about", this::showAbout));
         column.addView(settings, new LinearLayout.LayoutParams(-1, -2));
-        TextView author = text("XiaoLeXLDW", 12, colors.muted, false);
-        author.setGravity(Gravity.CENTER);
-        author.setLetterSpacing(0.025f);
-        addWithTopMargin(column, author, 30);
         setContentView(root);
         root.requestApplyInsets();
     }
@@ -374,41 +373,79 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void showAbout() {
-        String version;
-        try {
-            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-            version = info.versionName == null ? "" : info.versionName;
-        } catch (android.content.pm.PackageManager.NameNotFoundException unavailable) {
-            version = "";
-        }
-        new AlertDialog.Builder(this)
-                .setTitle("关于 5G 开关")
-                .setMessage("版本 " + version + "\n\n作者 XiaoLeXLDW")
-                .setNeutralButton("开源许可", (dialog, which) -> showLicenses())
-                .setPositiveButton("完成", null)
-                .show();
+    private View launcherVisibilityRow() {
+        LinearLayout row = horizontal();
+        row.setTag("hide-launcher-row");
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(22), dp(17), dp(22), dp(17));
+        LinearLayout labels = vertical();
+        TextView title = text("隐藏启动器图标", 16, colors.ink, true);
+        labels.addView(title);
+        TextView detail = text("隐藏后可按住控制中心的 5G 按钮进入", 13, colors.muted, false);
+        detail.setLineSpacing(dp(2), 1f);
+        addWithTopMargin(labels, detail, 5);
+        row.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
+        launcherSwitch = new Switch(this);
+        launcherSwitch.setTag("hide-launcher-switch");
+        launcherSwitch.setContentDescription("隐藏启动器图标");
+        launcherSwitch.setMinHeight(dp(48));
+        launcherSwitch.setShowText(false);
+        refreshLauncherSwitch();
+        launcherSwitch.setOnCheckedChangeListener((button, hidden) -> {
+            if (updatingLauncherSwitch) return;
+            // The icon changes only after the recovery instructions are acknowledged.
+            refreshLauncherSwitch();
+            if (hidden) {
+                new AlertDialog.Builder(this)
+                        .setTitle("隐藏启动器图标")
+                        .setMessage("请先将 5G 按钮添加到控制中心。\n\n隐藏后，按住控制中心的 5G 按钮即可再次进入本应用；关闭此开关可恢复图标。")
+                        .setNegativeButton("取消", null)
+                        .setPositiveButton("隐藏图标", (dialog, which) -> setLauncherHidden(true))
+                        .show();
+            } else {
+                setLauncherHidden(false);
+            }
+        });
+        LinearLayout.LayoutParams switchParams = new LinearLayout.LayoutParams(-2, -2);
+        switchParams.setMarginStart(dp(12));
+        row.addView(launcherSwitch, switchParams);
+        row.setOnClickListener(view -> launcherSwitch.performClick());
+        return row;
     }
 
-    private void showLicenses() {
-        StringBuilder content = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                getAssets().open("licenses.txt"), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) content.append(line).append('\n');
-        } catch (IOException unavailable) {
-            content.append("许可信息暂不可用。");
+    private void refreshLauncherSwitch() {
+        if (launcherSwitch == null) return;
+        updatingLauncherSwitch = true;
+        try {
+            launcherSwitch.setChecked(LauncherVisibility.isHidden(this));
+        } finally {
+            updatingLauncherSwitch = false;
         }
-        TextView notice = text(content.toString(), 12, colors.ink, false);
-        notice.setTag("license-text");
-        notice.setTypeface(Typeface.MONOSPACE);
-        notice.setTextIsSelectable(true);
-        notice.setPadding(dp(24), dp(12), dp(24), dp(16));
-        ScrollView scroll = new ScrollView(this);
-        scroll.addView(notice);
+    }
+
+    private void setLauncherHidden(boolean hidden) {
+        try {
+            LauncherVisibility.setHidden(this, hidden);
+            Toast.makeText(this, hidden ? "图标已隐藏，按住控制中心的 5G 按钮可进入"
+                    : "启动器图标已恢复", Toast.LENGTH_LONG).show();
+        } catch (RuntimeException unavailable) {
+            Log.w("FiveGUI", "Could not change launcher visibility", unavailable);
+            Toast.makeText(this, "无法更改启动器图标，请重试", Toast.LENGTH_LONG).show();
+        }
+        refreshLauncherSwitch();
+    }
+
+    private void showAbout() {
+        LinearLayout content = vertical();
+        content.setPadding(dp(24), dp(8), dp(24), dp(8));
+        Button github = button("GitHub", false);
+        github.setTag("github-link");
+        github.setContentDescription("打开 GitHub 项目");
+        github.setOnClickListener(view -> startSafely(new Intent(Intent.ACTION_VIEW, Uri.parse(REPOSITORY_URL))));
+        content.addView(github, new LinearLayout.LayoutParams(-1, -2));
         new AlertDialog.Builder(this)
-                .setTitle("开源许可")
-                .setView(scroll)
+                .setTitle("关于")
+                .setView(content)
                 .setPositiveButton("完成", null)
                 .show();
     }
@@ -449,7 +486,7 @@ public class MainActivity extends Activity {
         button.setText(title);
         button.setTextSize(14);
         button.setTextColor(filled ? colors.onAccent : colors.accent);
-        button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        button.setTypeface(Typeface.create(SYSTEM_SANS, 500, false));
         button.setAllCaps(false);
         button.setMinWidth(0);
         button.setMinimumWidth(0);
@@ -468,7 +505,7 @@ public class MainActivity extends Activity {
         text.setTextSize(size);
         text.setTextColor(color);
         text.setIncludeFontPadding(false);
-        text.setTypeface(Typeface.DEFAULT, bold ? Typeface.BOLD : Typeface.NORMAL);
+        text.setTypeface(Typeface.create(SYSTEM_SANS, bold ? 500 : 400, false));
         return text;
     }
 
