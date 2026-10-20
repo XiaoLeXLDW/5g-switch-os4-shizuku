@@ -7,6 +7,7 @@
 | [Shizuku API / Provider 13.1.5](https://github.com/RikkaApps/Shizuku-API) | MIT，Copyright 2021 RikkaW |
 | [AndroidHiddenApiBypass 6.2](https://github.com/LSPosed/AndroidHiddenApiBypass) | Apache-2.0 |
 | [AndroidX Annotations](https://android.googlesource.com/platform/frameworks/support/) | Apache-2.0 |
+| Roboto Regular 字形轮廓（静态默认图标，Copyright 2011 Google Inc.） | Apache-2.0 |
 | [Gradle Wrapper](https://github.com/gradle/gradle)（构建工具） | Apache-2.0 |
 
 完整应用依赖许可见 [licenses.txt](native/app/src/main/assets/licenses.txt)，也随 APK 一同打包。Gradle Wrapper 的原版权头保留。

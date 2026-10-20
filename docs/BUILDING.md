@@ -22,7 +22,7 @@ cd native
 bash ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
-测试报告在 `native/app/build/reports/`，截图在 `native/app/build/test-screenshots/`。当前包名为 `com.ysy.switcherfiveg.hyperos4`，版本为 `1.1.0` / `26102002`。
+测试报告在 `native/app/build/reports/`，截图在 `native/app/build/test-screenshots/`。当前包名为 `com.ysy.switcherfiveg.hyperos4`，版本为 `1.1.1` / `26102003`。
 
 ## 签名 release
 

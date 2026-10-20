@@ -148,7 +148,7 @@ public class MainActivity extends Activity {
         LinearLayout header = horizontal();
         header.setGravity(Gravity.CENTER_VERTICAL);
         ImageView icon = new ImageView(this);
-        icon.setImageResource(R.drawable.ic_tile_5g);
+        icon.setImageIcon(TileIcon.create());
         icon.setImageTintList(ColorStateList.valueOf(colors.accent));
         icon.setBackground(round(colors.accentSurface, 15));
         icon.setPadding(dp(11), dp(11), dp(11), dp(11));

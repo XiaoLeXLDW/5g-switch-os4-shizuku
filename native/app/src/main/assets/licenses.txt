@@ -234,3 +234,9 @@ AndroidX Annotations / Apache-2.0
 Copyright The Android Open Source Project
 https://android.googlesource.com/platform/frameworks/support/
 The Apache-2.0 license text above applies to this dependency as well.
+
+Roboto Regular fallback icon outlines
+Copyright 2011 Google Inc. All Rights Reserved.
+Licensed under the Apache License, Version 2.0, reproduced above.
+Static 5G vector outlines rendered from Roboto Regular; no font file is bundled.
+Runtime Quick Settings lettering uses the device system font.

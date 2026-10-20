@@ -16,6 +16,7 @@ public class FiveGTileService extends TileService {
     private static final String TAG = "FiveGTile";
     private static final String TILE_CLASS = "com.ysy.switcherfiveg.SwitcherTileService";
     private FiveGController controller;
+    private Icon icon;
     private boolean listening;
     private final FiveGController.Listener listener = this::render;
 
@@ -26,6 +27,7 @@ public class FiveGTileService extends TileService {
 
     @Override public void onStartListening() {
         super.onStartListening();
+        icon = TileIcon.create();
         listening = true;
         controller.addListener(listener);
         controller.refresh();
@@ -72,7 +74,7 @@ public class FiveGTileService extends TileService {
             if (tile == null) return;
             String label = TilePreferences.label(this);
             tile.setLabel(label);
-            tile.setIcon(Icon.createWithResource(this, R.drawable.ic_tile_5g));
+            tile.setIcon(icon);
             boolean known = state.access == FiveGController.Access.READY && state.enabled >= 0 && !state.busy;
             // UNAVAILABLE suppresses clicks. Keep connection/authorization states tappable so they open the app.
             int tileState = state.busy || state.access == FiveGController.Access.UNSUPPORTED ? Tile.STATE_UNAVAILABLE
