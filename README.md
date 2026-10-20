@@ -2,7 +2,7 @@
 
 通过 Shizuku / Sui 切换默认数据卡的 5G，支持控制中心磁贴、名称修改和深浅主题。
 
-**已在小米 17 Ultra 徕卡版（HyperOS 4 / Android 17）上测试可用，实测使用 Stellar 激活。**
+**已在小米 17 Ultra 徕卡版（OS 4.0.4.0 / Android 17）上测试，使用 Stellar 激活。**
 
 [下载 APK](https://github.com/XiaoLeXLDW/5g-switch-os4-shizuku/releases/latest) · [构建](docs/BUILDING.md) · [MIT](LICENSE)
 
