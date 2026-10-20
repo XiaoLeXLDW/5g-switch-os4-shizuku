@@ -1,0 +1,148 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      signed_release:
+        description: Build a signed release APK using repository secrets
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: native
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Install Android SDK packages
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses > /dev/null
+          set -o pipefail
+          sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+      - name: Test, lint and assemble debug
+        run: bash ./gradlew --no-daemon --console=plain :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+      - name: Verify debug APK
+        run: |
+          mkdir -p app/build/verification/debug
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk | tee app/build/verification/debug/signature.txt
+          (cd app/build/outputs/apk/debug && sha256sum app-debug.apk > app-debug.apk.sha256)
+      - name: Upload debug APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: debug-apk-${{ github.sha }}
+          path: |
+            native/app/build/outputs/apk/debug/app-debug.apk
+            native/app/build/outputs/apk/debug/app-debug.apk.sha256
+            native/app/build/verification/debug/signature.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload test and lint results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-${{ github.sha }}
+          path: |
+            native/app/build/reports/
+            native/app/build/test-results/
+            native/app/build/test-screenshots/
+          if-no-files-found: warn
+          retention-days: 14
+
+  signed-release:
+    if: github.event_name == 'workflow_dispatch' && inputs.signed_release
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: native
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: true
+      - name: Install Android SDK packages
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses > /dev/null
+          set -o pipefail
+          sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+      - name: Prepare external signing key
+        env:
+          FIVEG_KEYSTORE_BASE64: ${{ secrets.FIVEG_KEYSTORE_BASE64 }}
+          FIVEG_STORE_PASSWORD: ${{ secrets.FIVEG_STORE_PASSWORD }}
+          FIVEG_KEY_ALIAS: ${{ secrets.FIVEG_KEY_ALIAS }}
+          FIVEG_KEY_PASSWORD: ${{ secrets.FIVEG_KEY_PASSWORD }}
+        run: |
+          for name in FIVEG_KEYSTORE_BASE64 FIVEG_STORE_PASSWORD FIVEG_KEY_ALIAS FIVEG_KEY_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing signing secret: $name"
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$FIVEG_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/fiveg-release.jks"
+      - name: Build signed release
+        env:
+          FIVEG_STORE_FILE: ${{ runner.temp }}/fiveg-release.jks
+          FIVEG_STORE_PASSWORD: ${{ secrets.FIVEG_STORE_PASSWORD }}
+          FIVEG_KEY_ALIAS: ${{ secrets.FIVEG_KEY_ALIAS }}
+          FIVEG_KEY_PASSWORD: ${{ secrets.FIVEG_KEY_PASSWORD }}
+        run: bash ./gradlew --no-daemon --console=plain :app:lintRelease :app:assembleRelease
+      - name: Verify signed release APK
+        run: |
+          test -f app/build/outputs/apk/release/app-release.apk
+          mkdir -p app/build/verification/release
+          tools="$ANDROID_HOME/build-tools/36.0.0"
+          "$tools/zipalign" -c -P 16 4 app/build/outputs/apk/release/app-release.apk
+          "$tools/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk | tee app/build/verification/release/signature.txt
+          "$tools/apksigner" verify --verbose --min-sdk-version 24 --max-sdk-version 27 app/build/outputs/apk/release/app-release.apk | tee app/build/verification/release/signature-v2.txt
+          "$tools/aapt2" dump badging app/build/outputs/apk/release/app-release.apk | tee app/build/verification/release/badging.txt
+          grep -F "name='com.ysy.switcherfiveg.hyperos4' versionCode='26102001' versionName='1.0.0'" app/build/verification/release/badging.txt
+          (cd app/build/outputs/apk/release && sha256sum app-release.apk > app-release.apk.sha256)
+      - name: Upload signed release candidate
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: signed-release-apk-${{ github.sha }}
+          path: |
+            native/app/build/outputs/apk/release/app-release.apk
+            native/app/build/outputs/apk/release/app-release.apk.sha256
+            native/app/build/verification/release/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f -- "$RUNNER_TEMP/fiveg-release.jks"
