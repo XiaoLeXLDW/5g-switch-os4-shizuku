@@ -38,12 +38,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-      - name: Install Android SDK packages
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '15859902'
+          log-accepted-android-sdk-licenses: false
+          packages: 'platforms;android-37.0 build-tools;36.0.0'
+      - name: Verify Android SDK installation
         run: |
-          set +o pipefail
-          yes | sdkmanager --licenses > /dev/null
-          set -o pipefail
-          sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+          command -v sdkmanager
+          test -f "$ANDROID_HOME/platforms/android-37.0/android.jar"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/apksigner"
       - name: Test, lint and assemble debug
         run: bash ./gradlew --no-daemon --console=plain :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
       - name: Verify debug APK
@@ -94,12 +99,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: true
-      - name: Install Android SDK packages
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          cmdline-tools-version: '15859902'
+          log-accepted-android-sdk-licenses: false
+          packages: 'platforms;android-37.0 build-tools;36.0.0'
+      - name: Verify Android SDK installation
         run: |
-          set +o pipefail
-          yes | sdkmanager --licenses > /dev/null
-          set -o pipefail
-          sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+          command -v sdkmanager
+          test -f "$ANDROID_HOME/platforms/android-37.0/android.jar"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/apksigner"
       - name: Prepare external signing key
         env:
           FIVEG_KEYSTORE_BASE64: ${{ secrets.FIVEG_KEYSTORE_BASE64 }}
