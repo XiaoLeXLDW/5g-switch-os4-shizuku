@@ -1,17 +1,31 @@
 # 5G Switch
 
-通过 Shizuku / Sui 切换默认数据卡的 5G，支持控制中心磁贴、名称修改、深浅主题和隐藏启动器图标。
+English · [简体中文](README.zh-CN.md)
 
-**在小米 17 Ultra 徕卡版（OS 4.0.4.0 / Android 17）上安装使用并确认可用，使用 Stellar 激活。**
+Toggle 5G for your default mobile data SIM through Shizuku or Sui. Includes a Quick Settings tile, a custom tile name, light and dark themes, and an option to hide the launcher icon.
 
-[下载 APK](https://github.com/XiaoLeXLDW/5g-switch-os4-shizuku/releases/latest) · [构建](docs/BUILDING.md) · [MIT](LICENSE)
+[Download APK](https://github.com/XiaoLeXLDW/5g-switch-os4-shizuku/releases/latest) · [Build from source (中文)](docs/BUILDING.md) · [MIT license](LICENSE)
 
-安装后允许 Shizuku 授权即可使用。磁贴默认名称为 `5G·`，只修改 5G 开关，状态以系统读回为准。
+## Get started
 
-开启“隐藏启动器图标”前，先将 5G 按钮添加到控制中心。隐藏后按住控制中心的 5G 按钮即可进入应用，关闭该开关可恢复图标。
+1. Install the APK on Android 11 or later, start Shizuku or Sui, and grant the app access.
+2. Open the app or add its **5G·** tile to Quick Settings to toggle 5G. The app changes only the default data SIM's 5G preference and reads the result back from the system.
+3. To hide the launcher icon, add the tile first. Once hidden, long-press the tile to open the app; turn off **Hide launcher icon** to restore the icon.
 
-界面和控制中心的 5G 图标使用系统无衬线字体；图标在运行时以常规字重绘制，跟随系统字形，不内置字体文件。
+## Languages
 
-<img src="docs/screenshots/native-light-enabled.png" width="260" alt="浅色界面"> <img src="docs/screenshots/native-dark-disabled.png" width="260" alt="深色界面">
+The current source supports **English**, **Simplified Chinese**, and **Traditional Chinese**. The interface follows the system language, with English as the fallback. Android 13 and later also support choosing the app language in system settings. Your custom tile name is preserved when the language changes.
 
-界面示例为本机渲染图。[第三方许可](THIRD_PARTY_NOTICES.md)。
+## Compatibility
+
+**v1.1.1** was confirmed usable on a Xiaomi 17 Ultra Leica Edition (HyperOS 4, OS 4.0.4.0 / Android 17), using Stellar activation. Physical device validation of v1.2.0 is pending.
+
+Android 11 is the minimum supported SDK version; behavior on other devices depends on the ROM and its telephony APIs. Enabling 5G permits the network mode; actual 5G connectivity depends on your SIM, carrier, and coverage.
+
+## Screenshots
+
+<img src="docs/screenshots/native-en-light-enabled.png" width="260" alt="English interface in light theme, 5G enabled"> <img src="docs/screenshots/native-en-dark-disabled.png" width="260" alt="English interface in dark theme, 5G disabled">
+
+These are local test renders of the English interface. The app and tile icons are drawn with the system sans-serif font; no font file is bundled.
+
+See [third-party notices](THIRD_PARTY_NOTICES.md).

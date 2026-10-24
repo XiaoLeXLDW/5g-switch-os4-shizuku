@@ -141,7 +141,7 @@ jobs:
           "$tools/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk | tee app/build/verification/release/signature.txt
           "$tools/apksigner" verify --verbose --min-sdk-version 24 --max-sdk-version 27 app/build/outputs/apk/release/app-release.apk | tee app/build/verification/release/signature-v2.txt
           "$tools/aapt2" dump badging app/build/outputs/apk/release/app-release.apk | tee app/build/verification/release/badging.txt
-          grep -F "name='com.ysy.switcherfiveg.hyperos4' versionCode='26102003' versionName='1.1.1'" app/build/verification/release/badging.txt
+          grep -F "name='com.ysy.switcherfiveg.hyperos4' versionCode='26102501' versionName='1.2.0'" app/build/verification/release/badging.txt
           (cd app/build/outputs/apk/release && sha256sum app-release.apk > app-release.apk.sha256)
       - name: Upload signed release candidate
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

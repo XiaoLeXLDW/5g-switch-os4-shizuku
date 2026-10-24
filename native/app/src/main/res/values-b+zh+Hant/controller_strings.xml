@@ -1,0 +1,30 @@
+<resources>
+    <string name="controller_not_authorized">尚未授權</string>
+    <string name="controller_allow_app">在 Shizuku 中允許 5G 開關存取</string>
+    <string name="controller_permission_required">需要授權</string>
+    <string name="controller_allow_in_shizuku">請在 Shizuku 的應用程式授權中允許存取</string>
+    <string name="controller_waiting_permission">等待授權</string>
+    <string name="controller_allow_in_dialog">請在授權視窗中允許存取</string>
+    <string name="controller_reading">正在讀取</string>
+    <string name="controller_switching">正在切換</string>
+    <string name="controller_no_data_sim">未選擇數據 SIM 卡</string>
+    <string name="controller_select_data_sim">請在系統設定中選擇預設行動數據 SIM 卡</string>
+    <string name="controller_enabled">5G 已開啟</string>
+    <string name="controller_disabled">5G 已關閉</string>
+    <string name="controller_default_data_sim">預設數據 SIM 卡</string>
+    <string name="controller_data_sim_changed">數據 SIM 卡已變更</string>
+    <string name="controller_refresh_settings">請重新整理以讀取目前設定</string>
+    <string name="controller_access_denied">系統拒絕存取</string>
+    <string name="controller_sim_access_denied">目前系統不允許存取此 SIM 卡的 5G 設定</string>
+    <string name="controller_interface_unavailable">系統介面無法使用</string>
+    <string name="controller_interface_missing">目前系統未提供所需的 5G 設定介面</string>
+    <string name="controller_unconfirmed">無法確認設定</string>
+    <string name="controller_refresh_state">請重新整理以查看目前 5G 狀態</string>
+    <string name="controller_not_read">尚未讀取</string>
+    <string name="controller_allow_to_switch">允許 Shizuku 存取後即可切換</string>
+    <string name="controller_shizuku_outdated">Shizuku 版本過舊</string>
+    <string name="controller_update_shizuku">請更新 Shizuku 後重試</string>
+    <string name="controller_shizuku_stopped">Shizuku 未執行</string>
+    <string name="controller_start_shizuku">啟動 Shizuku 或 Sui 後即可連線</string>
+    <string name="tile_content_description">%1$s，%2$s</string>
+</resources>

@@ -1,0 +1,30 @@
+<resources>
+    <string name="controller_not_authorized">Not authorized</string>
+    <string name="controller_allow_app">Allow 5G Switch access in Shizuku</string>
+    <string name="controller_permission_required">Permission required</string>
+    <string name="controller_allow_in_shizuku">Allow access in Shizuku’s authorized apps</string>
+    <string name="controller_waiting_permission">Waiting for permission</string>
+    <string name="controller_allow_in_dialog">Allow access in the permission dialog</string>
+    <string name="controller_reading">Reading…</string>
+    <string name="controller_switching">Switching…</string>
+    <string name="controller_no_data_sim">No data SIM selected</string>
+    <string name="controller_select_data_sim">Select the default mobile data SIM in system settings</string>
+    <string name="controller_enabled">5G is on</string>
+    <string name="controller_disabled">5G is off</string>
+    <string name="controller_default_data_sim">Default data SIM</string>
+    <string name="controller_data_sim_changed">Data SIM changed</string>
+    <string name="controller_refresh_settings">Refresh to read the current setting</string>
+    <string name="controller_access_denied">Access denied by system</string>
+    <string name="controller_sim_access_denied">This system does not allow access to this SIM’s 5G setting</string>
+    <string name="controller_interface_unavailable">System interface unavailable</string>
+    <string name="controller_interface_missing">This system does not provide the required 5G settings interface</string>
+    <string name="controller_unconfirmed">Could not confirm setting</string>
+    <string name="controller_refresh_state">Refresh to check the current 5G state</string>
+    <string name="controller_not_read">Not read yet</string>
+    <string name="controller_allow_to_switch">Allow Shizuku access to switch 5G</string>
+    <string name="controller_shizuku_outdated">Shizuku is outdated</string>
+    <string name="controller_update_shizuku">Update Shizuku and try again</string>
+    <string name="controller_shizuku_stopped">Shizuku is not running</string>
+    <string name="controller_start_shizuku">Start Shizuku or Sui to connect</string>
+    <string name="tile_content_description">%1$s, %2$s</string>
+</resources>

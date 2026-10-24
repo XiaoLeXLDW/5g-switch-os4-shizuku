@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.service.quicksettings.Tile;
@@ -38,6 +39,11 @@ public class FiveGTileService extends TileService {
         requestUpdate(this);
     }
 
+    @Override public void onConfigurationChanged(Configuration configuration) {
+        super.onConfigurationChanged(configuration);
+        if (listening && controller != null) render(controller.state());
+    }
+
     @Override public void onStopListening() {
         listening = false;
         controller.removeListener(listener);
@@ -69,6 +75,7 @@ public class FiveGTileService extends TileService {
 
     private void render(FiveGController.State state) {
         if (!listening) return;
+        state = state.localized(this);
         try {
             Tile tile = getQsTile();
             if (tile == null) return;
@@ -82,7 +89,7 @@ public class FiveGTileService extends TileService {
             tile.setState(tileState);
             tile.setSubtitle(state.status);
             tile.setStateDescription(state.status);
-            tile.setContentDescription(label + "，" + state.status);
+            tile.setContentDescription(getString(R.string.tile_content_description, label, state.status));
             tile.updateTile();
         } catch (IllegalStateException | SecurityException disconnected) {
             Log.d(TAG, "Tile connection ended", disconnected);

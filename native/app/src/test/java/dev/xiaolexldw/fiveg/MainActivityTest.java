@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 35, application = Application.class, qualifiers = "w393dp-h852dp-xhdpi")
+@Config(sdk = 35, application = Application.class, qualifiers = "zh-rCN-w393dp-h852dp-xhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 public class MainActivityTest {
     private FakeController fake;
@@ -244,19 +244,19 @@ public class MainActivityTest {
         try (ActivityController<TestActivity> lifecycle = launch()) {
             capture(lifecycle.get(), "native-light-enabled.png");
         }
-        RuntimeEnvironment.setQualifiers("w393dp-h852dp-night-xhdpi");
+        RuntimeEnvironment.setQualifiers("zh-rCN-w393dp-h852dp-night-xhdpi");
         fake.value = state(0, false, FiveGController.Access.READY);
         try (ActivityController<TestActivity> lifecycle = launch()) {
             capture(lifecycle.get(), "native-dark-disabled.png");
         }
-        RuntimeEnvironment.setQualifiers("w393dp-h852dp-notnight-xhdpi");
+        RuntimeEnvironment.setQualifiers("zh-rCN-w393dp-h852dp-notnight-xhdpi");
         fake.value = state(-1, false, FiveGController.Access.PERMISSION_REQUIRED);
         try (ActivityController<TestActivity> lifecycle = launch()) {
             capture(lifecycle.get(), "native-light-authorization.png");
         }
     }
 
-    @Test @Config(qualifiers = "w320dp-h640dp-xhdpi")
+    @Test @Config(qualifiers = "zh-rCN-w320dp-h640dp-xhdpi")
     public void narrowLargeTextScreenKeepsActionsScrollable() throws IOException {
         Configuration configuration = new Configuration(RuntimeEnvironment.getApplication()
                 .getResources().getConfiguration());

@@ -1,4 +1,44 @@
 <resources>
-    <string name="app_name">5G开关·A17</string>
-    <string name="five_g_tile_label">5G·</string>
+    <string name="app_name">5G Switch·A17</string>
+    <string name="five_g_tile_label" translatable="false">5G·</string>
+    <string name="five_g_label" translatable="false">5G</string>
+    <string name="github_label" translatable="false">GitHub</string>
+    <string name="ui_title">5G Switch</string>
+    <string name="ui_refresh">Refresh</string>
+    <string name="ui_current_state">Current status</string>
+    <string name="ui_reading">Reading…</string>
+    <string name="ui_on">On</string>
+    <string name="ui_off">Off</string>
+    <string name="ui_waiting_permission">Awaiting permission</string>
+    <string name="ui_waiting_connection">Awaiting connection</string>
+    <string name="ui_unavailable">Unavailable</string>
+    <string name="ui_unknown">Unknown status</string>
+    <string name="ui_updating">Updating…</string>
+    <string name="ui_grant_permission">Grant permission</string>
+    <string name="ui_settings">Settings</string>
+    <string name="ui_tile_name">Quick Settings tile name</string>
+    <string name="ui_mobile_network_settings">Mobile network settings</string>
+    <string name="ui_about">About</string>
+    <string name="ui_permission_required">Permission required</string>
+    <string name="ui_permission_detail">Allow Shizuku access to manage 5G.</string>
+    <string name="ui_connect_shizuku">Connect to Shizuku</string>
+    <string name="ui_start_shizuku_detail">Start Shizuku, then return here.</string>
+    <string name="ui_open_shizuku">Open Shizuku</string>
+    <string name="ui_unsupported_device">Device not supported</string>
+    <string name="ui_read_failed">Unable to read the 5G status.</string>
+    <string name="ui_label_limit">Up to %1$d characters</string>
+    <string name="ui_cancel">Cancel</string>
+    <string name="ui_save">Save</string>
+    <string name="ui_enter_name">Enter a name</string>
+    <string name="ui_shizuku_not_installed">Shizuku is not installed</string>
+    <string name="ui_open_failed">Unable to open</string>
+    <string name="ui_hide_launcher">Hide launcher icon</string>
+    <string name="ui_hide_launcher_detail">After hiding, touch and hold the 5G tile in Quick Settings to open the app</string>
+    <string name="ui_hide_launcher_confirmation">Add the 5G tile to Quick Settings first.\n\nAfter hiding the icon, touch and hold the 5G tile to open this app. Turn this setting off to restore the icon.</string>
+    <string name="ui_hide_icon">Hide icon</string>
+    <string name="ui_launcher_hidden">Icon hidden. Touch and hold the 5G tile in Quick Settings to open the app.</string>
+    <string name="ui_launcher_restored">Launcher icon restored</string>
+    <string name="ui_launcher_change_failed">Unable to change the launcher icon. Try again.</string>
+    <string name="ui_open_github">Open the GitHub project</string>
+    <string name="ui_done">Done</string>
 </resources>

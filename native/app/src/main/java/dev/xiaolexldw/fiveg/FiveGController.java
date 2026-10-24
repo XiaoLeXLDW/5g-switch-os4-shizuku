@@ -36,8 +36,15 @@ public final class FiveGController {
         public final String status;
         public final String detail;
         public final Access access;
+        private final int statusResource;
+        private final int detailResource;
 
         public State(int enabled, boolean busy, String status, String detail, Access access) {
+            this(enabled, busy, status, detail, access, 0, 0);
+        }
+
+        private State(int enabled, boolean busy, String status, String detail, Access access,
+                int statusResource, int detailResource) {
             if (enabled < -1 || enabled > 1) throw new IllegalArgumentException("Invalid 5G state");
             if (access == null) throw new IllegalArgumentException("Missing access state");
             this.enabled = enabled;
@@ -45,6 +52,21 @@ public final class FiveGController {
             this.status = status == null ? "" : status;
             this.detail = detail == null ? "" : detail;
             this.access = access;
+            this.statusResource = statusResource;
+            this.detailResource = detailResource;
+        }
+
+        static State fromResources(Context context, int enabled, boolean busy,
+                int statusResource, int detailResource, Access access) {
+            return new State(enabled, busy, context.getString(statusResource),
+                    detailResource == 0 ? "" : context.getString(detailResource), access,
+                    statusResource, detailResource);
+        }
+
+        /** Resolve cached messages again when the app or service locale changes. */
+        State localized(Context context) {
+            if (statusResource == 0) return this;
+            return fromResources(context, enabled, busy, statusResource, detailResource, access);
         }
     }
 
@@ -66,7 +88,7 @@ public final class FiveGController {
     private final AtomicBoolean inFlight = new AtomicBoolean();
     private final AtomicLong connectionGeneration = new AtomicLong();
     private final Set<Listener> listeners = new LinkedHashSet<>();
-    private volatile State current = unavailable(Access.SERVICE_STOPPED);
+    private volatile State current;
     private boolean permissionRequestPending;
 
     private final Shizuku.OnBinderReceivedListener binderReceived = this::onBinderReceived;
@@ -96,7 +118,8 @@ public final class FiveGController {
             if (result == PackageManager.PERMISSION_GRANTED) {
                 refresh();
             } else {
-                publish(new State(-1, false, "尚未授权", "在 Shizuku 中允许 5G 开关访问", Access.PERMISSION_REQUIRED));
+                publish(translated(-1, false, R.string.controller_not_authorized,
+                        R.string.controller_allow_app, Access.PERMISSION_REQUIRED));
             }
             FiveGTileService.requestUpdate(context);
         });
@@ -109,18 +132,19 @@ public final class FiveGController {
 
     private FiveGController(Context context) {
         this.context = context;
+        current = unavailable(Access.SERVICE_STOPPED);
         // ShizukuProvider initializes Sui automatically. No separate initialization or daemon.
         Shizuku.addBinderDeadListener(binderDead, main);
         Shizuku.addRequestPermissionResultListener(permissionResult, main);
         Shizuku.addBinderReceivedListenerSticky(binderReceived, main);
     }
 
-    public State state() { return current; }
+    public State state() { return current.localized(context); }
 
     public void addListener(Listener listener) {
         if (listener == null) return;
         onMain(() -> {
-            if (listeners.add(listener)) notifyListener(listener, current);
+            if (listeners.add(listener)) notifyListener(listener, state());
         });
     }
 
@@ -142,11 +166,13 @@ public final class FiveGController {
             if (access != Access.PERMISSION_REQUIRED) { publish(unavailable(access)); return; }
             try {
                 if (Shizuku.shouldShowRequestPermissionRationale()) {
-                    publish(new State(-1, false, "需要授权", "请在 Shizuku 的应用授权中允许访问", access));
+                    publish(translated(-1, false, R.string.controller_permission_required,
+                            R.string.controller_allow_in_shizuku, access));
                     return;
                 }
                 permissionRequestPending = true;
-                publish(new State(-1, false, "等待授权", "请在授权窗口中允许访问", access));
+                publish(translated(-1, false, R.string.controller_waiting_permission,
+                        R.string.controller_allow_in_dialog, access));
                 Shizuku.requestPermission(PERMISSION_REQUEST);
             } catch (RuntimeException error) {
                 permissionRequestPending = false;
@@ -163,8 +189,9 @@ public final class FiveGController {
             long generation = connectionGeneration.get();
             IBinder authorizationBinder = Shizuku.getBinder();
             State previous = current;
-            publish(new State(previous.enabled, true,
-                    command == Command.READ ? "正在读取" : "正在切换", "", previous.access));
+            publish(translated(previous.enabled, true,
+                    command == Command.READ ? R.string.controller_reading : R.string.controller_switching,
+                    0, previous.access));
             telephony.execute(() -> {
                 State result;
                 try { result = execute(command, generation, authorizationBinder); }
@@ -181,7 +208,8 @@ public final class FiveGController {
         ensureCurrentConnection(generation, authorizationBinder);
         int subId = SubscriptionManager.getDefaultDataSubscriptionId();
         if (!SubscriptionManager.isValidSubscriptionId(subId) || subId == Integer.MAX_VALUE) {
-            return new State(-1, false, "未选择数据 SIM", "请在系统设置中选择默认移动数据 SIM", Access.UNSUPPORTED);
+            return translated(-1, false, R.string.controller_no_data_sim,
+                    R.string.controller_select_data_sim, Access.UNSUPPORTED);
         }
         Object phone = phoneService();
         int before = NetworkTypesCompat.readState(phone, subId);
@@ -234,12 +262,15 @@ public final class FiveGController {
         if (invalidated) refresh();
     }
 
-    private static State confirmed(int enabled) {
-        return new State(enabled, false, enabled == 1 ? "5G 已开启" : "5G 已关闭", "默认数据 SIM", Access.READY);
+    private State confirmed(int enabled) {
+        return translated(enabled, false,
+                enabled == 1 ? R.string.controller_enabled : R.string.controller_disabled,
+                R.string.controller_default_data_sim, Access.READY);
     }
 
-    private static State changedSubscription() {
-        return new State(-1, false, "数据 SIM 已更改", "请刷新读取当前设置", Access.READY);
+    private State changedSubscription() {
+        return translated(-1, false, R.string.controller_data_sim_changed,
+                R.string.controller_refresh_settings, Access.READY);
     }
 
     private State failure(Throwable error) {
@@ -247,12 +278,15 @@ public final class FiveGController {
         Access access = safeAccess();
         if (access != Access.READY) return unavailable(access);
         if (error instanceof SecurityException) {
-            return new State(-1, false, "系统拒绝访问", "当前系统不允许访问此 SIM 的 5G 设置", Access.UNSUPPORTED);
+            return translated(-1, false, R.string.controller_access_denied,
+                    R.string.controller_sim_access_denied, Access.UNSUPPORTED);
         }
         if (error instanceof ReflectiveOperationException || error instanceof LinkageError) {
-            return new State(-1, false, "系统接口不可用", "当前系统未提供所需的 5G 设置接口", Access.UNSUPPORTED);
+            return translated(-1, false, R.string.controller_interface_unavailable,
+                    R.string.controller_interface_missing, Access.UNSUPPORTED);
         }
-        return new State(-1, false, "未能确认设置", "请刷新查看当前 5G 状态", Access.READY);
+        return translated(-1, false, R.string.controller_unconfirmed,
+                R.string.controller_refresh_state, Access.READY);
     }
 
     private static Access safeAccess() {
@@ -268,16 +302,24 @@ public final class FiveGController {
         }
     }
 
-    private static State unavailable(Access access) {
+    private State unavailable(Access access) {
         switch (access) {
-            case READY: return new State(-1, false, "尚未读取", "", access);
-            case PERMISSION_REQUIRED: return new State(-1, false, "需要授权", "允许 Shizuku 访问后即可切换", access);
-            case UNSUPPORTED: return new State(-1, false, "Shizuku 版本过旧", "请更新 Shizuku 后重试", access);
-            default: return new State(-1, false, "Shizuku 未运行", "启动 Shizuku 或 Sui 后即可连接", access);
+            case READY: return translated(-1, false, R.string.controller_not_read, 0, access);
+            case PERMISSION_REQUIRED: return translated(-1, false, R.string.controller_permission_required,
+                    R.string.controller_allow_to_switch, access);
+            case UNSUPPORTED: return translated(-1, false, R.string.controller_shizuku_outdated,
+                    R.string.controller_update_shizuku, access);
+            default: return translated(-1, false, R.string.controller_shizuku_stopped,
+                    R.string.controller_start_shizuku, access);
         }
     }
 
+    private State translated(int enabled, boolean busy, int statusResource, int detailResource, Access access) {
+        return State.fromResources(context, enabled, busy, statusResource, detailResource, access);
+    }
+
     private void publish(State state) {
+        state = state.localized(context);
         current = state;
         for (Listener listener : new ArrayList<>(listeners)) notifyListener(listener, state);
     }

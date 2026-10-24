@@ -154,30 +154,30 @@ public class MainActivity extends Activity {
         icon.setPadding(dp(11), dp(11), dp(11), dp(11));
         icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         header.addView(icon, new LinearLayout.LayoutParams(dp(46), dp(46)));
-        TextView heading = text("5G 开关", 26, colors.ink, true);
+        TextView heading = text(getString(R.string.ui_title), 26, colors.ink, true);
         LinearLayout.LayoutParams headingParams = new LinearLayout.LayoutParams(0, -2, 1);
         headingParams.setMarginStart(dp(13));
         headingParams.setMarginEnd(dp(8));
         header.addView(heading, headingParams);
-        refreshButton = button("刷新", false);
+        refreshButton = button(getString(R.string.ui_refresh), false);
         refreshButton.setTag("refresh");
         refreshButton.setOnClickListener(view -> controller.refresh());
-        header.addView(refreshButton, new LinearLayout.LayoutParams(-2, dp(48)));
+        header.addView(refreshButton, new LinearLayout.LayoutParams(-2, -2));
         column.addView(header);
 
         LinearLayout hero = vertical();
         hero.setPadding(dp(26), dp(24), dp(26), dp(26));
         hero.setBackground(round(colors.hero, 30));
-        hero.addView(text("当前状态", 13, colors.heroMuted, false));
+        hero.addView(text(getString(R.string.ui_current_state), 13, colors.heroMuted, false));
         LinearLayout main = horizontal();
         main.setGravity(Gravity.CENTER_VERTICAL);
-        TextView fiveG = text("5G", 66, colors.heroInk, true);
+        TextView fiveG = text(getString(R.string.five_g_label), 66, colors.heroInk, true);
         fiveG.setLetterSpacing(0f);
         main.addView(fiveG, new LinearLayout.LayoutParams(0, -2, 1));
         toggle = new Switch(this);
         toggle.setTag("fiveg-switch");
         toggle.setShowText(false);
-        toggle.setContentDescription("5G 开关");
+        toggle.setContentDescription(getString(R.string.ui_title));
         toggle.setMinHeight(dp(56));
         toggle.setSwitchMinWidth(dp(57));
         toggle.setSplitTrack(false);
@@ -199,7 +199,7 @@ public class MainActivity extends Activity {
         });
         main.addView(toggle, new LinearLayout.LayoutParams(-2, -2));
         hero.addView(main, new LinearLayout.LayoutParams(-1, -2));
-        stateTitle = text("读取中", 26, colors.heroInk, true);
+        stateTitle = text(getString(R.string.ui_reading), 26, colors.heroInk, true);
         stateTitle.setTag("state-title");
         stateTitle.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         hero.addView(stateTitle, new LinearLayout.LayoutParams(-1, -2));
@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
         accessDetail = text("", 14, colors.muted, false);
         accessDetail.setLineSpacing(dp(3), 1f);
         addWithTopMargin(accessCard, accessDetail, 7);
-        accessButton = button("授予权限", true);
+        accessButton = button(getString(R.string.ui_grant_permission), true);
         accessButton.setTag("authorize");
         accessButton.setOnClickListener(view -> {
             if (currentAccess == FiveGController.Access.PERMISSION_REQUIRED) {
@@ -235,7 +235,7 @@ public class MainActivity extends Activity {
         accessCard.addView(accessButton, authorizeParams);
         addWithTopMargin(column, accessCard, 16);
 
-        TextView section = text("设置", 13, colors.muted, true);
+        TextView section = text(getString(R.string.ui_settings), 13, colors.muted, true);
         LinearLayout.LayoutParams sectionParams = new LinearLayout.LayoutParams(-1, -2);
         sectionParams.topMargin = dp(30);
         sectionParams.bottomMargin = dp(11);
@@ -246,13 +246,13 @@ public class MainActivity extends Activity {
         settings.setBackground(round(colors.card, 24));
         tileLabel = text(TilePreferences.label(this), 14, colors.muted, false);
         tileLabel.setTag("tile-label-value");
-        settings.addView(settingsRow("控制中心名称", tileLabel, "tile-label", this::showLabelDialog));
+        settings.addView(settingsRow(getString(R.string.ui_tile_name), tileLabel, "tile-label", this::showLabelDialog));
         divider(settings);
-        settings.addView(settingsRow("移动网络设置", null, "network-settings", this::openNetworkSettings));
+        settings.addView(settingsRow(getString(R.string.ui_mobile_network_settings), null, "network-settings", this::openNetworkSettings));
         divider(settings);
         settings.addView(launcherVisibilityRow());
         divider(settings);
-        settings.addView(settingsRow("关于", null, "about", this::showAbout));
+        settings.addView(settingsRow(getString(R.string.ui_about), null, "about", this::showAbout));
         column.addView(settings, new LinearLayout.LayoutParams(-1, -2));
         setContentView(root);
         root.requestApplyInsets();
@@ -260,6 +260,7 @@ public class MainActivity extends Activity {
 
     void render(FiveGController.State state) {
         if (state == null) return;
+        state = state.localized(this);
         currentAccess = state.access;
         boolean known = state.enabled == 0 || state.enabled == 1;
         updatingSwitch = true;
@@ -270,16 +271,16 @@ public class MainActivity extends Activity {
         refreshButton.setAlpha(state.busy ? 0.45f : 1f);
 
         String title;
-        if (known) title = state.enabled == 1 ? "已开启" : "已关闭";
-        else if (state.access == FiveGController.Access.PERMISSION_REQUIRED) title = "等待授权";
-        else if (state.access == FiveGController.Access.SERVICE_STOPPED) title = "等待连接";
-        else if (state.access == FiveGController.Access.UNSUPPORTED) title = "暂不可用";
-        else title = state.busy ? "读取中" : firstNonBlank(state.status, "状态未知");
+        if (known) title = getString(state.enabled == 1 ? R.string.ui_on : R.string.ui_off);
+        else if (state.access == FiveGController.Access.PERMISSION_REQUIRED) title = getString(R.string.ui_waiting_permission);
+        else if (state.access == FiveGController.Access.SERVICE_STOPPED) title = getString(R.string.ui_waiting_connection);
+        else if (state.access == FiveGController.Access.UNSUPPORTED) title = getString(R.string.ui_unavailable);
+        else title = state.busy ? getString(R.string.ui_reading) : firstNonBlank(state.status, getString(R.string.ui_unknown));
         stateTitle.setText(title);
-        toggle.setStateDescription(known ? title : "状态未知");
+        toggle.setStateDescription(known ? title : getString(R.string.ui_unknown));
 
         if (state.access == FiveGController.Access.READY) {
-            String detail = state.busy ? "正在更新…" : firstNonBlank(state.detail, state.status);
+            String detail = state.busy ? getString(R.string.ui_updating) : firstNonBlank(state.detail, state.status);
             stateDetail.setText(detail);
             stateDetail.setVisibility(detail.isEmpty() ? View.GONE : View.VISIBLE);
             accessCard.setVisibility(View.GONE);
@@ -290,16 +291,16 @@ public class MainActivity extends Activity {
         accessButton.setEnabled(!state.busy);
         accessButton.setVisibility(state.access == FiveGController.Access.UNSUPPORTED ? View.GONE : View.VISIBLE);
         if (state.access == FiveGController.Access.PERMISSION_REQUIRED) {
-            accessTitle.setText("需要授权");
-            accessDetail.setText(firstNonBlank(state.detail, "允许通过 Shizuku 管理 5G 开关。"));
-            accessButton.setText("授予权限");
+            accessTitle.setText(R.string.ui_permission_required);
+            accessDetail.setText(firstNonBlank(state.detail, getString(R.string.ui_permission_detail)));
+            accessButton.setText(R.string.ui_grant_permission);
         } else if (state.access == FiveGController.Access.SERVICE_STOPPED) {
-            accessTitle.setText("连接 Shizuku");
-            accessDetail.setText(firstNonBlank(state.detail, "启动 Shizuku 后返回此处。"));
-            accessButton.setText("打开 Shizuku");
+            accessTitle.setText(R.string.ui_connect_shizuku);
+            accessDetail.setText(firstNonBlank(state.detail, getString(R.string.ui_start_shizuku_detail)));
+            accessButton.setText(R.string.ui_open_shizuku);
         } else {
-            accessTitle.setText(firstNonBlank(state.status, "当前设备暂不支持"));
-            accessDetail.setText(firstNonBlank(state.detail, "无法读取 5G 状态。"));
+            accessTitle.setText(firstNonBlank(state.status, getString(R.string.ui_unsupported_device)));
+            accessDetail.setText(firstNonBlank(state.detail, getString(R.string.ui_read_failed)));
         }
     }
 
@@ -316,19 +317,19 @@ public class MainActivity extends Activity {
         LinearLayout box = vertical();
         box.setPadding(dp(24), dp(7), dp(24), dp(8));
         box.addView(input, new LinearLayout.LayoutParams(-1, dp(56)));
-        TextView limit = text("最多 6 个字符", 13, colors.muted, false);
+        TextView limit = text(getString(R.string.ui_label_limit, MAX_LABEL_CODE_POINTS), 13, colors.muted, false);
         addWithTopMargin(box, limit, 8);
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("控制中心名称")
+                .setTitle(R.string.ui_tile_name)
                 .setView(box)
-                .setNegativeButton("取消", null)
-                .setPositiveButton("保存", null)
+                .setNegativeButton(R.string.ui_cancel, null)
+                .setPositiveButton(R.string.ui_save, null)
                 .create();
         dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 .setOnClickListener(view -> {
                     String label = input.getText().toString().trim();
                     if (label.isEmpty()) {
-                        input.setError("请输入名称");
+                        input.setError(getString(R.string.ui_enter_name));
                         return;
                     }
                     TilePreferences.setLabel(this, label);
@@ -351,7 +352,7 @@ public class MainActivity extends Activity {
     private void openShizuku() {
         Intent intent = getPackageManager().getLaunchIntentForPackage("moe.shizuku.privileged.api");
         if (intent == null) {
-            Toast.makeText(this, "未安装 Shizuku", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.ui_shizuku_not_installed, Toast.LENGTH_SHORT).show();
             return;
         }
         startSafely(intent);
@@ -369,7 +370,7 @@ public class MainActivity extends Activity {
         try {
             startActivity(intent);
         } catch (android.content.ActivityNotFoundException | SecurityException unavailable) {
-            Toast.makeText(this, "无法打开", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.ui_open_failed, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -379,15 +380,15 @@ public class MainActivity extends Activity {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(dp(22), dp(17), dp(22), dp(17));
         LinearLayout labels = vertical();
-        TextView title = text("隐藏启动器图标", 16, colors.ink, true);
+        TextView title = text(getString(R.string.ui_hide_launcher), 16, colors.ink, true);
         labels.addView(title);
-        TextView detail = text("隐藏后可按住控制中心的 5G 按钮进入", 13, colors.muted, false);
+        TextView detail = text(getString(R.string.ui_hide_launcher_detail), 13, colors.muted, false);
         detail.setLineSpacing(dp(2), 1f);
         addWithTopMargin(labels, detail, 5);
         row.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
         launcherSwitch = new Switch(this);
         launcherSwitch.setTag("hide-launcher-switch");
-        launcherSwitch.setContentDescription("隐藏启动器图标");
+        launcherSwitch.setContentDescription(getString(R.string.ui_hide_launcher));
         launcherSwitch.setMinHeight(dp(48));
         launcherSwitch.setShowText(false);
         refreshLauncherSwitch();
@@ -397,10 +398,10 @@ public class MainActivity extends Activity {
             refreshLauncherSwitch();
             if (hidden) {
                 new AlertDialog.Builder(this)
-                        .setTitle("隐藏启动器图标")
-                        .setMessage("请先将 5G 按钮添加到控制中心。\n\n隐藏后，按住控制中心的 5G 按钮即可再次进入本应用；关闭此开关可恢复图标。")
-                        .setNegativeButton("取消", null)
-                        .setPositiveButton("隐藏图标", (dialog, which) -> setLauncherHidden(true))
+                        .setTitle(R.string.ui_hide_launcher)
+                        .setMessage(R.string.ui_hide_launcher_confirmation)
+                        .setNegativeButton(R.string.ui_cancel, null)
+                        .setPositiveButton(R.string.ui_hide_icon, (dialog, which) -> setLauncherHidden(true))
                         .show();
             } else {
                 setLauncherHidden(false);
@@ -426,11 +427,11 @@ public class MainActivity extends Activity {
     private void setLauncherHidden(boolean hidden) {
         try {
             LauncherVisibility.setHidden(this, hidden);
-            Toast.makeText(this, hidden ? "图标已隐藏，按住控制中心的 5G 按钮可进入"
-                    : "启动器图标已恢复", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, hidden ? R.string.ui_launcher_hidden
+                    : R.string.ui_launcher_restored, Toast.LENGTH_LONG).show();
         } catch (RuntimeException unavailable) {
             Log.w("FiveGUI", "Could not change launcher visibility", unavailable);
-            Toast.makeText(this, "无法更改启动器图标，请重试", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.ui_launcher_change_failed, Toast.LENGTH_LONG).show();
         }
         refreshLauncherSwitch();
     }
@@ -438,15 +439,15 @@ public class MainActivity extends Activity {
     private void showAbout() {
         LinearLayout content = vertical();
         content.setPadding(dp(24), dp(8), dp(24), dp(8));
-        Button github = button("GitHub", false);
+        Button github = button(getString(R.string.github_label), false);
         github.setTag("github-link");
-        github.setContentDescription("打开 GitHub 项目");
+        github.setContentDescription(getString(R.string.ui_open_github));
         github.setOnClickListener(view -> startSafely(new Intent(Intent.ACTION_VIEW, Uri.parse(REPOSITORY_URL))));
         content.addView(github, new LinearLayout.LayoutParams(-1, -2));
         new AlertDialog.Builder(this)
-                .setTitle("关于")
+                .setTitle(R.string.ui_about)
                 .setView(content)
-                .setPositiveButton("完成", null)
+                .setPositiveButton(R.string.ui_done, null)
                 .show();
     }
 

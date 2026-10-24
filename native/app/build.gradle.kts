@@ -43,8 +43,8 @@ android {
         applicationId = "com.ysy.switcherfiveg.hyperos4"
         minSdk = 30
         targetSdk = 35
-        versionCode = 26102003
-        versionName = "1.1.1"
+        versionCode = 26102501
+        versionName = "1.2.0"
     }
     signingConfigs {
         if (signingConfigured) {
